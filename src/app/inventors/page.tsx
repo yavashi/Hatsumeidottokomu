@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { Header, Footer } from "@/components/Navigation";
 import { mockInventors, mockInventions } from "@/data/mock";
-import { Award, Lightbulb, MapPin, Sparkles, ArrowRight, Search, Users, X } from "lucide-react";
+import { Lightbulb, MapPin, Sparkles, ArrowRight, Search, Users, X } from "lucide-react";
 
 export default function InventorsListPage() {
   const [searchQuery, setSearchQuery] = useState("");

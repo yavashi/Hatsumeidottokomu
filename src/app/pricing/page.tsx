@@ -7,12 +7,7 @@ import {
   Sparkles, 
   Check, 
   Award, 
-  Heart, 
   ShieldCheck, 
-  Building2, 
-  HelpCircle,
-  ArrowRight,
-  Clock,
   QrCode,
   FileText
 } from "lucide-react";
@@ -149,7 +144,7 @@ export default function PricingPage() {
                     });
                     const data = await res.json();
                     if (data.url) window.location.href = data.url;
-                  } catch (e) {
+                  } catch {
                     alert("決済画面の起動に失敗しました。");
                   }
                 }}
@@ -212,7 +207,7 @@ export default function PricingPage() {
                     });
                     const data = await res.json();
                     if (data.url) window.location.href = data.url;
-                  } catch (e) {
+                  } catch {
                     alert("決済画面の起動に失敗しました。");
                   }
                 }}

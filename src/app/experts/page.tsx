@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Header, Footer } from "@/components/Navigation";
 import { mockExperts, mockInventions } from "@/data/mock";
-import { saveExpertInquiry } from "@/lib/storage";
+import { saveExpertInquiry, getAllInventions } from "@/lib/storage";
+import { Invention } from "@/types";
 import { 
   Wrench, 
   Scale, 
@@ -17,11 +17,16 @@ import {
   CheckCircle2, 
   Send, 
   X, 
-  Sparkles,
-  HelpCircle
+  Sparkles
 } from "lucide-react";
 
 export default function ExpertsPage() {
+  const [inventionsList] = useState<Invention[]>(() => {
+    if (typeof window !== "undefined") {
+      return getAllInventions();
+    }
+    return mockInventions;
+  });
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedExpert, setSelectedExpert] = useState<typeof mockExperts[0] | null>(null);
   const [inquirySubmitted, setInquirySubmitted] = useState<boolean>(false);
@@ -315,9 +320,9 @@ export default function ExpertsPage() {
                     <select
                       value={selectedInvention}
                       onChange={(e) => setSelectedInvention(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-stone-800 bg-stone-50"
+                      className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-stone-800 bg-stone-50 text-base"
                     >
-                      {mockInventions.map((inv) => (
+                      {inventionsList.map((inv) => (
                         <option key={inv.id} value={inv.title}>
                           {inv.title}
                         </option>

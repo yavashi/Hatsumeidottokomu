@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useMemo } from "react";
 import { Header, Footer } from "@/components/Navigation";
 import { InventionCard } from "@/components/InventionCard";
 import { mockInventions } from "@/data/mock";
@@ -11,8 +10,6 @@ import {
   Search, 
   Layers, 
   Wrench, 
-  Flame, 
-  Clock, 
   Sparkles, 
   SlidersHorizontal, 
   Award,
@@ -23,16 +20,17 @@ import {
 type SortOption = "wants" | "newest" | "views" | "likes";
 
 export default function InventionsListPage() {
-  const [inventionsList, setInventionsList] = useState<Invention[]>(mockInventions);
+  const [inventionsList] = useState<Invention[]>(() => {
+    if (typeof window !== "undefined") {
+      return getAllInventions();
+    }
+    return mockInventions;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedProcess, setSelectedProcess] = useState<string>("all");
   const [onlyPatent, setOnlyPatent] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("wants");
-
-  useEffect(() => {
-    setInventionsList(getAllInventions());
-  }, []);
 
   const categories = [
     { id: "all", name: "すべて" },
@@ -98,8 +96,8 @@ export default function InventionsListPage() {
       } else if (sortBy === "newest") {
         return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(); // 新着順
       } else if (sortBy === "views") {
-        const aViews = (a as any).pageViews ?? a.viewsCount ?? 0;
-        const bViews = (b as any).pageViews ?? b.viewsCount ?? 0;
+        const aViews = a.pageViews ?? a.viewsCount ?? 0;
+        const bViews = b.pageViews ?? b.viewsCount ?? 0;
         return bViews - aViews; // 閲覧数順
       } else if (sortBy === "likes") {
         return (b.likesCount || 0) - (a.likesCount || 0); // いいね数順
@@ -108,7 +106,7 @@ export default function InventionsListPage() {
     });
 
     return result;
-  }, [searchQuery, selectedCategory, selectedProcess, onlyPatent, sortBy]);
+  }, [inventionsList, searchQuery, selectedCategory, selectedProcess, onlyPatent, sortBy]);
 
   const resetFilters = () => {
     setSearchQuery("");

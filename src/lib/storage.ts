@@ -1,5 +1,5 @@
-import { Invention, Inventor } from "@/types";
-import { mockInventions, mockInventors } from "@/data/mock";
+import { Invention } from "@/types";
+import { mockInventions } from "@/data/mock";
 
 const STORAGE_KEYS = {
   CUSTOM_INVENTIONS: "hatsumei_custom_inventions",
@@ -23,11 +23,12 @@ export interface CustomComment {
 export interface UserProfile {
   name: string;
   nickname: string;
+  role: "inventor" | "supporter";
   location: string;
   bio: string;
   avatarUrl: string;
-  isInventor: boolean;
-  registeredDate: string;
+  contactEmail: string;
+  registeredDate?: string;
 }
 
 export interface ExpertInquiry {
@@ -39,18 +40,18 @@ export interface ExpertInquiry {
   topic: string;
   budget: string;
   message: string;
-  status: "相談受付中" | "専門家確認中" | "見積提示済";
+  status: "専門家確認中" | "面談調整中" | "完了";
   createdAt: string;
 }
 
-// 初期プロフィール（デフォルト）
 const DEFAULT_PROFILE: UserProfile = {
   name: "田中 義男",
   nickname: "義さん（下町の旋盤職人）",
-  location: "東京都大田区",
-  bio: "町工場で45年間、金属加工と旋盤に携わってきました。妻が関節リウマチを患ったことをきっかけに、力のない高齢者でも日常生活を快適に送れるアイデア道具を自宅のガレージで手作りしています。",
-  avatarUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=250",
-  isInventor: true,
+  role: "inventor",
+  location: "東京都 大田区",
+  bio: "町工場の旋盤職人を45年務めました。妻が関節痛でペットボトルのフタを開けるのに困っていたのをきっかけに、テコ式オープナーを開発しました。",
+  avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80",
+  contactEmail: "tanaka.yoshio@example.com",
   registeredDate: "2026年1月15日",
 };
 
@@ -61,8 +62,8 @@ export function getSavedCustomInventions(): Invention[] {
     const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_INVENTIONS);
     if (!raw) return [];
     return JSON.parse(raw) as Invention[];
-  } catch (e) {
-    console.error("Failed to load custom inventions:", e);
+  } catch (err) {
+    console.error("Failed to load custom inventions:", err);
     return [];
   }
 }
@@ -74,8 +75,8 @@ export function saveCustomInvention(invention: Invention): void {
     const filtered = current.filter((i) => i.id !== invention.id);
     const updated = [invention, ...filtered];
     localStorage.setItem(STORAGE_KEYS.CUSTOM_INVENTIONS, JSON.stringify(updated));
-  } catch (e) {
-    console.error("Failed to save custom invention:", e);
+  } catch (err) {
+    console.error("Failed to save custom invention:", err);
   }
 }
 
@@ -85,23 +86,43 @@ export function deleteCustomInvention(id: string): void {
     const current = getSavedCustomInventions();
     const updated = current.filter((i) => i.id !== id);
     localStorage.setItem(STORAGE_KEYS.CUSTOM_INVENTIONS, JSON.stringify(updated));
-  } catch (e) {
-    console.error("Failed to delete custom invention:", e);
+  } catch (err) {
+    console.error("Failed to delete custom invention:", err);
   }
 }
 
-// モック＋カスタムを結合した全発明品を取得
 export function getAllInventions(): Invention[] {
   const custom = getSavedCustomInventions();
-  return [...custom, ...mockInventions];
+  // カスタム発明品（公開設定のみ）+ 初期モック一覧
+  const publicCustom = custom.filter((inv) => !inv.isPrivate);
+  return [...publicCustom, ...mockInventions];
 }
 
-// IDで1件取得
 export function findInventionById(id: string): Invention | null {
   const custom = getSavedCustomInventions();
   const foundInCustom = custom.find((i) => i.id === id);
   if (foundInCustom) return foundInCustom;
   return mockInventions.find((i) => i.id === id) || null;
+}
+
+export function updateInventionStats(id: string, delta: { likesDelta?: number; wantsDelta?: number }): void {
+  if (typeof window === "undefined") return;
+  try {
+    const list = getSavedCustomInventions();
+    const updated = list.map((inv) => {
+      if (inv.id === id) {
+        return {
+          ...inv,
+          likesCount: Math.max(0, (inv.likesCount || 0) + (delta.likesDelta || 0)),
+          wantsCount: Math.max(0, (inv.wantsCount || 0) + (delta.wantsDelta || 0)),
+        };
+      }
+      return inv;
+    });
+    localStorage.setItem(STORAGE_KEYS.CUSTOM_INVENTIONS, JSON.stringify(updated));
+  } catch (err) {
+    console.error("Failed to update invention stats:", err);
+  }
 }
 
 // --- プロフィールの保存・取得 ---
@@ -111,7 +132,7 @@ export function getUserProfile(): UserProfile {
     const raw = localStorage.getItem(STORAGE_KEYS.USER_PROFILE);
     if (!raw) return DEFAULT_PROFILE;
     return JSON.parse(raw) as UserProfile;
-  } catch (e) {
+  } catch {
     return DEFAULT_PROFILE;
   }
 }
@@ -120,8 +141,8 @@ export function saveUserProfile(profile: UserProfile): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
-  } catch (e) {
-    console.error("Failed to save user profile:", e);
+  } catch (err) {
+    console.error("Failed to save user profile:", err);
   }
 }
 
@@ -132,7 +153,7 @@ export function getFavoriteIds(): string[] {
     const raw = localStorage.getItem(STORAGE_KEYS.FAVORITES);
     if (!raw) return ["inno-02", "inno-03"];
     return JSON.parse(raw) as string[];
-  } catch (e) {
+  } catch {
     return ["inno-02", "inno-03"];
   }
 }
@@ -152,8 +173,8 @@ export function toggleFavorite(inventionId: string): boolean {
     }
     localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updated));
     return isNowFavorited;
-  } catch (e) {
-    console.error("Failed to toggle favorite:", e);
+  } catch (err) {
+    console.error("Failed to toggle favorite:", err);
     return false;
   }
 }
@@ -166,7 +187,7 @@ export function getCommentsForInvention(inventionId: string): CustomComment[] {
     if (!raw) return [];
     const all = JSON.parse(raw) as CustomComment[];
     return all.filter((c) => c.inventionId === inventionId);
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -178,8 +199,8 @@ export function addCommentForInvention(comment: CustomComment): void {
     const all: CustomComment[] = raw ? JSON.parse(raw) : [];
     const updated = [comment, ...all];
     localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(updated));
-  } catch (e) {
-    console.error("Failed to add comment:", e);
+  } catch (err) {
+    console.error("Failed to add comment:", err);
   }
 }
 
@@ -205,7 +226,7 @@ export function getExpertInquiries(): ExpertInquiry[] {
       ];
     }
     return JSON.parse(raw) as ExpertInquiry[];
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -216,7 +237,7 @@ export function saveExpertInquiry(inquiry: ExpertInquiry): void {
     const current = getExpertInquiries();
     const updated = [inquiry, ...current];
     localStorage.setItem(STORAGE_KEYS.EXPERT_INQUIRIES, JSON.stringify(updated));
-  } catch (e) {
-    console.error("Failed to save expert inquiry:", e);
+  } catch (err) {
+    console.error("Failed to save expert inquiry:", err);
   }
 }

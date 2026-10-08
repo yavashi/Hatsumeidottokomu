@@ -1,15 +1,9 @@
 import React from "react";
 import { LayoutSection } from "@/types";
 import { 
-  Sparkles, 
   CheckCircle2, 
-  ArrowRight, 
-  HelpCircle, 
   Users, 
-  Cog, 
-  BookOpen,
-  XCircle,
-  Lightbulb
+  XCircle
 } from "lucide-react";
 
 interface SectionProps {

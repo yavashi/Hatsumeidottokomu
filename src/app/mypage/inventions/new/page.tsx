@@ -7,27 +7,18 @@ import {
   Sparkles, 
   Send, 
   Bot, 
-  User, 
   CheckCircle2, 
   RefreshCw, 
   LayoutTemplate, 
-  ChevronRight,
-  Lightbulb,
-  FileText,
-  Wrench,
-  ThumbsUp,
-  Layers,
-  ArrowRight,
-  Upload,
-  Image as ImageIcon,
-  AlertTriangle,
-  Mic,
-  Edit3,
-  ShieldAlert,
-  Share2,
-  Printer,
-  Check,
-  X
+  Upload, 
+  Image as ImageIcon, 
+  Mic, 
+  Edit3, 
+  ShieldAlert, 
+  Share2, 
+  Printer, 
+  Camera,
+  ChevronRight
 } from "lucide-react";
 import { saveCustomInvention } from "@/lib/storage";
 import { Invention } from "@/types";
@@ -119,39 +110,98 @@ export default function RegisterInventionPage() {
     processes: string[];
   } | null>(null);
 
-  // 写真選択のモック処理
+  // 音声入力ステート & Web Speech API
+  const [isRecording, setIsRecording] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
+
+  const handleToggleVoiceInput = () => {
+    if (typeof window === "undefined") return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("お使いのブラウザは音声認識に対応していません。キーボードまたはスマホの音声入力機能をお試しください。");
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "ja-JP";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          setInputVal((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setIsRecording(false);
+    }
+  };
+
+  // 写真選択の処理（リロード後も消えないBase64 Data URLへ変換）
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const fakeUrl = URL.createObjectURL(file);
-      setUploadedImagePreview(fakeUrl);
-      setInventorAnswers((prev) => ({ ...prev, uploadedPhotoUrl: fakeUrl }));
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setUploadedImagePreview(dataUrl);
+        setInventorAnswers((prev) => ({ ...prev, uploadedPhotoUrl: dataUrl }));
 
-      // 写真アップロードのチャットを自動送信
-      const photoMessage: ChatMessage = {
-        id: createMessageId("user-photo"),
-        sender: "inventor",
-        text: `📸 写真（${file.name}）をアップロードしました`
-      };
-      setMessages((prev) => [...prev, photoMessage]);
-
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-        const reply: ChatMessage = {
-          id: createMessageId("ai"),
-          sender: "ai",
-          text: `写真を確認しました！実物の試作品があると説得力が全く違いますね。素晴らしいです！\n\n続いて、**使っている材質（木・樹脂・金属など）**や、**特許・実用新案の状況**について教えてください。`,
-          suggestedAnswers: [
-            "アルミと木製。特許取得済み。メーカーに量産してほしい",
-            "シリコン素材。特許出願中。日用品メーカーと組みたい",
-            "ステンレス製。実用新案あり。キッチン器具メーカー希望",
-            "試作段階。特許なし（未出願）。作り方から相談したい"
-          ]
+        // 写真アップロードのチャットを自動送信
+        const photoMessage: ChatMessage = {
+          id: createMessageId("user-photo"),
+          sender: "inventor",
+          text: `📸 写真（${file.name}）をアップロードしました`
         };
-        setMessages((prev) => [...prev, reply]);
-        setInterviewStage(4);
-      }, 1000);
+        setMessages((prev) => [...prev, photoMessage]);
+
+        setIsTyping(true);
+        setTimeout(() => {
+          setIsTyping(false);
+          const reply: ChatMessage = {
+            id: createMessageId("ai"),
+            sender: "ai",
+            text: `写真を確認しました！実物の試作品があると説得力が全く違いますね。素晴らしいです！\n\n続いて、**使っている材質（木・樹脂・金属など）**や、**特許・実用新案の状況**について教えてください。`,
+            suggestedAnswers: [
+              "アルミと木製。特許取得済み。メーカーに量産してほしい",
+              "シリコン素材。特許出願中。日用品メーカーと組みたい",
+              "ステンレス製。実用新案あり。キッチン器具メーカー希望",
+              "試作段階。特許なし（未出願）。作り方から相談したい"
+            ]
+          };
+          setMessages((prev) => [...prev, reply]);
+          setInterviewStage(4);
+        }, 1000);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -415,16 +465,29 @@ export default function RegisterInventionPage() {
                           <ImageIcon className="w-4 h-4 text-amber-600" />
                           試作品やスケッチの写真を送る（任意）
                         </span>
-                        <label className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 px-4 rounded-xl cursor-pointer transition shadow-2xs">
-                          <Upload className="w-4 h-4" />
-                          <span>スマホやパソコンから写真を選択</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handlePhotoSelect}
-                            className="hidden"
-                          />
-                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          <label className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition shadow-2xs">
+                            <Upload className="w-4 h-4" />
+                            <span>写真アルバムから選ぶ</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handlePhotoSelect}
+                              className="hidden"
+                            />
+                          </label>
+                          <label className="inline-flex items-center gap-2 bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs py-2.5 px-4 rounded-xl cursor-pointer transition shadow-2xs">
+                            <Camera className="w-4 h-4" />
+                            <span>スマホで今すぐ撮影</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              onChange={handlePhotoSelect}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
                       </div>
                     )}
 
@@ -477,23 +540,31 @@ export default function RegisterInventionPage() {
                   type="text"
                   value={inputVal}
                   onChange={(e) => setInputVal(e.target.value)}
-                  placeholder="ご自身の言葉で自由に入力してください（音声入力もOK）"
-                  className="flex-1 px-4 py-3 rounded-2xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs md:text-sm bg-stone-50/40"
+                  placeholder={isRecording ? "🎤 お話しください（聞いています...）" : "ご自身の言葉で自由に入力（マイクで音声入力もOK）"}
+                  className={`flex-1 px-4 py-3 rounded-2xl border text-base focus:outline-none focus:ring-2 focus:ring-amber-500 bg-stone-50/40 ${
+                    isRecording ? "border-rose-400 bg-rose-50/30 text-rose-900" : "border-stone-300"
+                  }`}
                 />
                 <button
                   type="button"
-                  onClick={() => alert("マイクに向かってお話しください（Web Speech API連携）")}
-                  title="音声で入力"
-                  className="p-3 rounded-2xl border border-stone-300 hover:bg-stone-100 text-stone-600 transition"
+                  onClick={handleToggleVoiceInput}
+                  title={isRecording ? "音声入力を終了" : "音声で入力"}
+                  className={`p-3 rounded-2xl border transition flex items-center gap-1 cursor-pointer ${
+                    isRecording
+                      ? "bg-rose-100 border-rose-400 text-rose-700 animate-pulse font-bold"
+                      : "border-stone-300 hover:bg-stone-100 text-stone-700"
+                  }`}
                 >
-                  <Mic className="w-5 h-5 text-amber-600" />
+                  <Mic className={`w-5 h-5 ${isRecording ? "text-rose-600" : "text-amber-600"}`} />
+                  {isRecording && <span className="text-xs text-rose-600 hidden sm:inline">録音中</span>}
                 </button>
                 <button
                   type="submit"
                   disabled={!inputVal.trim()}
-                  className="bg-amber-600 hover:bg-amber-700 disabled:opacity-40 text-white p-3 rounded-2xl shadow-sm transition shrink-0"
+                  className="bg-amber-600 hover:bg-amber-700 disabled:opacity-40 text-white px-4 py-3 rounded-2xl shadow-sm transition shrink-0 flex items-center gap-1.5 font-bold text-sm cursor-pointer"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4" />
+                  <span>送信</span>
                 </button>
               </form>
               <p className="text-xs text-stone-400 mt-2 text-center">
@@ -628,7 +699,23 @@ export default function RegisterInventionPage() {
               <button
                 type="button"
                 onClick={() => {
+                  // 未出願かつ非公開保管モードでない場合で、かつ未確認の場合は警告モーダルを表示
+                  const text = (inventorAnswers.statusAndWish || "") + (inventorAnswers.uniqueness || "");
+                  const seemsUnpatented = text.includes("未出願") || text.includes("特許なし") || text.includes("出願前") || text.includes("試作段階");
+                  if (seemsUnpatented && !patentAgreed && !isPrivateArchiveMode) {
+                    setShowPatentWarningModal(true);
+                    return;
+                  }
+
                   const newId = `inv-custom-${Date.now()}`;
+                  // 正しい特許ステータス判定（patentAgreedは「未出願リスク承諾」なので特許なし扱い）
+                  const isActuallyPatented = 
+                    !patentAgreed && 
+                    !seemsUnpatented &&
+                    (inventorAnswers.statusAndWish.includes("特許取得") || 
+                     inventorAnswers.statusAndWish.includes("出願中") ||
+                     inventorAnswers.statusAndWish.includes("実用新案"));
+
                   const customInv: Invention = {
                     id: newId,
                     inventorId: "inv-01",
@@ -638,7 +725,7 @@ export default function RegisterInventionPage() {
                     description: `【開発の背景】\n${inventorAnswers.motivation || "長年の思いを込めて開発に着手しました。"}\n\n【工夫した点・こだわり】\n${inventorAnswers.uniqueness || "試行錯誤を繰り返しながら現在の形状にたどり着きました。"}\n\n【今後の展望】\n${inventorAnswers.statusAndWish || "多くの方のお役に立てるよう、商品化やお届けを目指しています。"}`,
                     primaryImageUrl: inventorAnswers.uploadedPhotoUrl || "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800",
                     additionalImages: inventorAnswers.uploadedPhotoUrl ? [inventorAnswers.uploadedPhotoUrl] : [],
-                    hasPatent: patentAgreed,
+                    hasPatent: isActuallyPatented,
                     isCommercialized: false,
                     materials: aiResult?.materials || ["手作り加工部品", "試作パーツ"],
                     processes: aiResult?.processes || ["手作業仕上げ", "試作検証"],

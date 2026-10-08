@@ -9,12 +9,7 @@ import {
   Flame, 
   Sparkles, 
   Award, 
-  ShoppingBag, 
-  Heart, 
-  Eye, 
-  Clock, 
   ArrowRight,
-  TrendingUp,
   UserCheck
 } from "lucide-react";
 

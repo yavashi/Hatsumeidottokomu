@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Header, Footer } from "@/components/Navigation";
-import { mockInventions, mockInventors } from "@/data/mock";
+import { mockInventions } from "@/data/mock";
 import { 
   getUserProfile, 
   saveUserProfile, 
@@ -23,55 +23,63 @@ import {
   Heart, 
   Eye, 
   Sparkles, 
-  Settings, 
   ExternalLink, 
   Lightbulb, 
   ThumbsUp, 
   MessageSquare, 
-  Clock,
-  Edit2,
-  Trash2,
-  Lock,
-  Globe,
-  Share2,
-  CheckCircle2,
-  X
+  Edit2, 
+  Trash2, 
+  Lock, 
+  Globe, 
+  Share2, 
+  X 
 } from "lucide-react";
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState<"inventor" | "general">("inventor");
-  const [profile, setProfile] = useState<UserProfile>(getUserProfile());
-  const [myInventions, setMyInventions] = useState<Invention[]>([]);
-  const [favoriteInventions, setFavoriteInventions] = useState<Invention[]>([]);
-  const [expertInquiries, setExpertInquiries] = useState<ExpertInquiry[]>([]);
+  const [profile, setProfile] = useState<UserProfile>(() => getUserProfile());
+  const [myInventions, setMyInventions] = useState<Invention[]>(() => {
+    if (typeof window !== "undefined") {
+      const custom = getSavedCustomInventions();
+      const defaultMocks = mockInventions.filter((inv) => inv.inventorId === "inv-01");
+      return [...custom, ...defaultMocks];
+    }
+    return mockInventions.filter((inv) => inv.inventorId === "inv-01");
+  });
+  const [favoriteInventions, setFavoriteInventions] = useState<Invention[]>(() => {
+    if (typeof window !== "undefined") {
+      const favIds = getFavoriteIds();
+      return getAllInventions().filter((inv) => favIds.includes(inv.id));
+    }
+    return [];
+  });
+  const [expertInquiries, setExpertInquiries] = useState<ExpertInquiry[]>(() => {
+    if (typeof window !== "undefined") {
+      return getExpertInquiries();
+    }
+    return [];
+  });
 
   // プロフィール編集モーダル
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
-  const [editForm, setEditForm] = useState<UserProfile>(profile);
+  const [editForm, setEditForm] = useState<UserProfile>(() => getUserProfile());
 
   const loadData = () => {
     const p = getUserProfile();
     setProfile(p);
     setEditForm(p);
 
-    // 自分の発明品: カスタム登録品 + 田中義男さんのモック
     const custom = getSavedCustomInventions();
     const defaultMocks = mockInventions.filter((inv) => inv.inventorId === "inv-01");
     setMyInventions([...custom, ...defaultMocks]);
 
-    // お気に入り発明品
     const favIds = getFavoriteIds();
     const all = getAllInventions();
     const favs = all.filter((inv) => favIds.includes(inv.id));
     setFavoriteInventions(favs);
 
-    // 専門家相談履歴
     setExpertInquiries(getExpertInquiries());
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   // プロフィール保存ハンドラー
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -294,8 +302,8 @@ export default function MyPage() {
               <div className="space-y-4">
                 {myInventions.map((inv) => {
                   const isCustom = inv.id.startsWith("inv-custom");
-                  const imgUrl = inv.primaryImageUrl || (inv as any).thumbnailUrl || "";
-                  const catchText = inv.catchphrase || (inv as any).tagline || "";
+                  const imgUrl = inv.primaryImageUrl || inv.thumbnailUrl || "";
+                  const catchText = inv.catchphrase || inv.tagline || "";
 
                   return (
                     <div
@@ -525,8 +533,8 @@ export default function MyPage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {favoriteInventions.map((inv) => {
-                    const imgUrl = inv.primaryImageUrl || (inv as any).thumbnailUrl || "";
-                    const catchText = inv.catchphrase || (inv as any).tagline || "";
+                    const imgUrl = inv.primaryImageUrl || inv.thumbnailUrl || "";
+                    const catchText = inv.catchphrase || inv.tagline || "";
 
                     return (
                       <Link

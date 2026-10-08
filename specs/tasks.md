@@ -74,6 +74,40 @@
   - [x] **27.4 詳細ページのインタラクション永続化**: 「♡ お気に入り」連動、応援コメント投稿のローカル永続化
   - [x] **27.5 法的基盤ページの整備**: 利用規約（`/terms`）、プライバシーポリシー（`/privacy`）、特定商取引法に基づく表記（`/tokushoho`）新設と全画面フッター導線統合
 
+- [x] **TASK-28 マルチエージェント総合監査の実施**:
+  - [x] 4体の専門エージェント（機能QA、シニアUX/a11y、知的財産/セキュリティ、コード品質/アーキテクチャ）による並行診断完了
+  - [x] 総合監査報告書 (`audit_report.md`) の作成・整理
+
+- [x] **TASK-29 P0緊急脆弱性・バグ改修完了**:
+  - [x] **Stripe価格改ざん脆弱性対策 (`/api/checkout`)**: クライアント送信価格を信用せずサーバー側価格マスターで安全に上書き照合
+  - [x] **特許フラグ誤代入バグ解消 & 公開前ガードレール (`new/page.tsx`)**: `hasPatent` の判定修正と未確認時の警告モーダル強制表示
+  - [x] **Gemini APIモデル名修正 (`/api/gemini/interview`)**: `gemini-3.8-flash` を実在する最新 `gemini-2.5-flash` へ正常化
+  - [x] **ショップ決済エラー時の不正注文完了防止 (`shop/page.tsx`)**: 通信失敗時のアラート表示と遷移防止
+  - [x] **ショップ同意チェックボックスの初期値是正 (`shop/page.tsx`)**: `defaultChecked` を撤廃し能動的同意を必須化
+  - [x] **特定商取引法代行表記の法的補完 (`tokushoho/page.tsx`)**: 開示請求時の遅滞なき実開示文言を追記
+  - [x] **Supabase RLSポリシーの堅牢化 (`supabase/schema.sql`)**: 非公開・下書き発明品を第三者から隔離
+
+- [x] **TASK-30 React 19 & ESLint エラー完全解消 (0 Errors達成)**:
+  - [x] `set-state-in-effect` の完全解消（遅延初期化関数へのリファクタリング、不要な `useEffect` 排除）
+  - [x] `@typescript-eslint/no-explicit-any` の排除と型定義の厳格化（`sections?: LayoutSection[]` 等）
+  - [x] 全コンポーネント・ページの未使用インポート・変数のクリーンアップ
+
+- [x] **TASK-31 シニアUX・アクセシビリティ向上**:
+  - [x] フォーム入力要素の16px（`text-base`）統一によるiOS Safariの自動ズーム防止
+  - [x] Web Speech APIによる本物のリアルタイム音声入力（マイク連動・録音中パルス表示）
+  - [x] スマホカメラ直結撮影（`capture="environment"`）とファイル選択のダブル導線
+  - [x] 送信ボタンへの「送信」テキスト併記、文字サイズ（10-11px撤廃）・コントラスト比の改善
+
+- [x] **TASK-32 データ永続化・印刷キット連動**:
+  - [x] アップロード写真の `FileReader` による Base64 Data URL 永続化（リロード時の画像消滅防止）
+  - [x] A4チラシ印刷キット (`print-kit`) および専門家相談 (`experts`) での自作カスタム登録品の選択連動
+  - [x] 作品詳細ページでの404 Not Found親切画面の実装
+
+- [x] **TASK-33 画像最適化基盤**:
+  - [x] `next.config.ts` への `remotePatterns`（Unsplash）登録
+  - [x] `InventionCard.tsx` への `next/image` 適用（WebP自動変換・遅延読み込み）
+  - [x] 全25ルートのビルド（`npm run build`）および `npm run lint` の完全成功検証
+
 ---
 
 ## 2. 進行中 / 次期候補タスク (Backlog / Draft)

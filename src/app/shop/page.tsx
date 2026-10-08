@@ -63,6 +63,8 @@ export default function ShopPage() {
         }
       } catch (err) {
         console.error("Stripe checkout error:", err);
+        alert("決済の初期化中にエラーが発生しました。通信環境や入力情報をご確認のうえ、もう一度お試しください。");
+        return;
       }
     }
 
@@ -427,21 +429,20 @@ export default function ShopPage() {
                     </div>
 
                     {/* 安全利用・PL法に関する免責事項＆特商法代行表記 */}
-                    <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-200 space-y-2">
-                      <label className="flex items-start gap-2 cursor-pointer">
+                    <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
+                      <label className="flex items-start gap-2.5 cursor-pointer">
                         <input
                           type="checkbox"
                           required
-                          defaultChecked
-                          className="mt-0.5 rounded text-amber-700 focus:ring-amber-500"
+                          className="mt-1 w-4 h-4 rounded text-amber-700 focus:ring-amber-500 cursor-pointer"
                         />
-                        <span className="text-[11px] text-stone-700 leading-tight">
+                        <span className="text-xs text-stone-800 leading-relaxed font-medium">
                           【手作り試作品の安全同意】本品は工房・個人による手作り試作品です。量産工業規格の耐久試験とは異なり、天然素材等の個体差が生じます。本来の用途・用法を守って安全にご使用いただくことに同意します。
                         </span>
                       </label>
 
-                      <div className="pt-2 border-t border-stone-200/80 text-[10px] text-stone-500 leading-relaxed">
-                        ※特定商取引法に基づく表記: 高齢発明家のプライバシー保護のため、販売事業者の連絡先はプラットフォーム運営会社（発明ドットコム事務局）が代行明記しております。
+                      <div className="pt-2 border-t border-stone-200/80 text-xs text-stone-600 leading-relaxed">
+                        ※特定商取引法に基づく表記: 高齢発明家のプライバシー保護のため、販売事業者の連絡先はプラットフォーム運営事務局が代行明記しております（購入者からの請求時は遅滞なく電磁的記録等で実開示いたします）。
                       </div>
                     </div>
 

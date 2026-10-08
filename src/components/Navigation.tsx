@@ -6,14 +6,12 @@ import {
   Lightbulb, 
   PlusCircle, 
   Search, 
-  Users, 
   User, 
   Trophy, 
   ShoppingBag, 
   Wrench, 
   Mail, 
-  CheckCircle2,
-  Sparkles
+  CheckCircle2
 } from "lucide-react";
 
 export const Header: React.FC = () => {

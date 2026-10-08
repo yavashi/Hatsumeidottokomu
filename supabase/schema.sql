@@ -96,10 +96,35 @@ alter table public.shop_orders enable row level security;
 alter table public.expert_consultations enable row level security;
 alter table public.newsletter_subscribers enable row level security;
 
--- 公開閲覧ポリシー
-create policy "Inventions are viewable by everyone" on public.inventions for select using (true);
-create policy "Want votes are viewable by everyone" on public.want_votes for select using (true);
+-- 1. 発明品ポリシー: 公開品は全員閲覧可能、非公開・下書き（特許出願準備中等）は作成者本人のみ閲覧・操作可能
+drop policy if exists "Inventions are viewable by everyone" on public.inventions;
+create policy "Public inventions are viewable by everyone" on public.inventions
+  for select using (status = 'published');
 
--- 専門家相談は当事者のみ参照可能（NDA遵守）
+create policy "Own inventions (including drafts) viewable by owner" on public.inventions
+  for select using (auth.uid()::text = inventor_id);
+
+create policy "Users can insert own inventions" on public.inventions
+  for insert with check (auth.uid()::text = inventor_id);
+
+create policy "Users can update own inventions" on public.inventions
+  for update using (auth.uid()::text = inventor_id);
+
+-- 2. プロフィールポリシー
+create policy "Public profiles are viewable by everyone" on public.profiles
+  for select using (true);
+create policy "Users can update own profile" on public.profiles
+  for update using (auth.uid() = id);
+
+-- 3. 応援投票ポリシー
+create policy "Want votes are viewable by everyone" on public.want_votes for select using (true);
+create policy "Authenticated users can cast want vote" on public.want_votes
+  for insert with check (auth.uid() is not null);
+
+-- 4. ネットショップ注文（個人情報保護：購入者本人または運営者）
+create policy "Shop orders viewable by buyer" on public.shop_orders
+  for select using (auth.uid()::text = buyer_id);
+
+-- 5. 専門家相談は当事者のみ参照可能（NDA遵守）
 create policy "Consultations viewable only by participants" on public.expert_consultations
   for select using (auth.uid()::text = inventor_id or auth.uid()::text = expert_id);

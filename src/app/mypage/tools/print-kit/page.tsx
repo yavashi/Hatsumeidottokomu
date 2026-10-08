@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { mockInventions } from "@/data/mock";
+import { getAllInventions } from "@/lib/storage";
+import { Invention } from "@/types";
 import { 
   Printer, 
   FileText, 
   CreditCard, 
   Download, 
-  ExternalLink, 
   CheckCircle2, 
   Sparkles, 
   QrCode, 
@@ -18,14 +19,26 @@ import {
 } from "lucide-react";
 
 export default function PrintKitPage() {
-  const [selectedInventionId, setSelectedInventionId] = useState<string>(mockInventions[0].id);
+  const [allInventions] = useState<Invention[]>(() => {
+    if (typeof window !== "undefined") {
+      return getAllInventions();
+    }
+    return mockInventions;
+  });
+  const [selectedInventionId, setSelectedInventionId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const list = getAllInventions();
+      return list[0]?.id || mockInventions[0].id;
+    }
+    return mockInventions[0].id;
+  });
   const [templateType, setTemplateType] = useState<"flyer" | "business_card">("flyer");
   const [accentColor, setAccentColor] = useState<string>("amber");
   const [isOrdering, setIsOrdering] = useState<boolean>(false);
   const [orderComplete, setOrderComplete] = useState<boolean>(false);
   const [customHeadline, setCustomHeadline] = useState<string>("");
 
-  const invention = mockInventions.find((i) => i.id === selectedInventionId) || mockInventions[0];
+  const invention = allInventions.find((i) => i.id === selectedInventionId) || allInventions[0];
 
   const headline = customHeadline || invention.catchphrase;
 
@@ -100,9 +113,9 @@ export default function PrintKitPage() {
               <select
                 value={selectedInventionId}
                 onChange={(e) => setSelectedInventionId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-xs font-medium text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-stone-50"
+                className="w-full px-3 py-2.5 rounded-xl border border-stone-300 text-sm font-medium text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-stone-50"
               >
-                {mockInventions.map((inv) => (
+                {allInventions.map((inv) => (
                   <option key={inv.id} value={inv.id}>
                     {inv.title}
                   </option>

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Header, Footer } from "@/components/Navigation";
 import { InventionCard } from "@/components/InventionCard";
 import { mockInventors, mockInventions } from "@/data/mock";
-import { MapPin, User, ArrowLeft, Lightbulb, Sparkles, Heart } from "lucide-react";
+import { MapPin, User, ArrowLeft, Lightbulb, Heart } from "lucide-react";
 
 export default async function InventorDetailPage({
   params,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Header, Footer } from "@/components/Navigation";
@@ -12,7 +12,7 @@ import {
   getFavoriteIds, 
   getCommentsForInvention, 
   addCommentForInvention,
-  CustomComment
+  updateInventionStats
 } from "@/lib/storage";
 import { Invention } from "@/types";
 import { 
@@ -21,7 +21,6 @@ import {
   Eye, 
   Award, 
   Sparkles, 
-  User, 
   Layers, 
   Wrench, 
   Building2, 
@@ -32,10 +31,6 @@ import {
   MessageCircle,
   Send,
   Share2,
-  FileText,
-  Calendar,
-  ThumbsUp,
-  Mail,
   Printer,
   X
 } from "lucide-react";
@@ -54,17 +49,27 @@ export default function InventionDetailPage() {
   const params = useParams();
   const inventionId = params.id as string;
 
-  const [currentInvention, setCurrentInvention] = useState<Invention>(() => {
-    return mockInventions.find((i) => i.id === inventionId) || mockInventions[0];
+  const [currentInvention] = useState<Invention | null>(() => {
+    if (typeof window !== "undefined") {
+      return findInventionById(inventionId);
+    }
+    return mockInventions.find((i) => i.id === inventionId) || null;
   });
 
   const invention = currentInvention;
-  const inventor = mockInventors.find((inv) => inv.id === invention.inventorId) || mockInventors[0];
+  const inventor = invention 
+    ? (mockInventors.find((inv) => inv.id === invention.inventorId) || mockInventors[0])
+    : mockInventors[0];
 
   // ステート管理
-  const [likes, setLikes] = useState(invention.likesCount);
-  const [hasLiked, setHasLiked] = useState(false);
-  const [wants, setWants] = useState(invention.wantsCount);
+  const [likes, setLikes] = useState(() => currentInvention?.likesCount ?? 0);
+  const [hasLiked, setHasLiked] = useState(() => {
+    if (typeof window !== "undefined") {
+      return getFavoriteIds().includes(inventionId);
+    }
+    return false;
+  });
+  const [wants, setWants] = useState(() => currentInvention?.wantsCount ?? 0);
   const [hasWanted, setHasWanted] = useState(false);
   
   // モーダルステート
@@ -86,24 +91,34 @@ export default function InventionDetailPage() {
   const [inquiryMessage, setInquiryMessage] = useState("");
 
   // 応援コメント一覧
-  const [comments, setComments] = useState<CommentItem[]>([
-    {
-      id: "c-1",
-      author: "介護スタッフ ゆき",
-      text: "デイサービスでペットボトルの開栓に困っている利用者様がたくさんいます。市販品は滑り止めばかりで握力がないと使えなかったので、このテコ機構は本当に素晴らしいです！",
-      presetBadge: "商品化されたら買いたい",
-      createdAt: "3日前",
-      likes: 14
-    },
-    {
-      id: "c-2",
-      author: "下町の金型職人",
-      text: "アルミ削り出しのカムの曲線が非常に美しいですね。45年の職人技と奥様への愛情がひしひしと伝わってきます。応援しています！",
-      presetBadge: "技術に感動",
-      createdAt: "1週間前",
-      likes: 22
+  const [comments, setComments] = useState<CommentItem[]>(() => {
+    const defaultComments: CommentItem[] = [
+      {
+        id: "c-1",
+        author: "介護スタッフ ゆき",
+        text: "デイサービスでペットボトルの開栓に困っている利用者様がたくさんいます。市販品は滑り止めばかりで握力がないと使えなかったので、このテコ機構は本当に素晴らしいです！",
+        presetBadge: "商品化されたら買いたい",
+        createdAt: "3日前",
+        likes: 14
+      },
+      {
+        id: "c-2",
+        author: "下町の金型職人",
+        text: "アルミ削り出しのカムの曲線が非常に美しいですね。45年の職人技と奥様への愛情がひしひしと伝わってきます。応援しています！",
+        presetBadge: "技術に感動",
+        createdAt: "1週間前",
+        likes: 22
+      }
+    ];
+
+    if (typeof window !== "undefined") {
+      const saved = getCommentsForInvention(inventionId);
+      if (saved.length > 0) {
+        return [...saved, ...defaultComments];
+      }
     }
-  ]);
+    return defaultComments;
+  });
 
   // 新規コメント投稿ステート
   const [commentText, setCommentText] = useState("");
@@ -118,31 +133,12 @@ export default function InventionDetailPage() {
     "デザインが温かい"
   ];
 
-  // クライアント側での動的データ読み込み（カスタム発明品・お気に入り・コメント）
-  useEffect(() => {
-    const loaded = findInventionById(inventionId);
-    if (loaded) {
-      setCurrentInvention(loaded);
-      setLikes(loaded.likesCount);
-      setWants(loaded.wantsCount);
-    }
-    const favs = getFavoriteIds();
-    setHasLiked(favs.includes(inventionId));
-
-    const savedComments = getCommentsForInvention(inventionId);
-    if (savedComments.length > 0) {
-      setComments((prev) => {
-        const existingIds = new Set(prev.map((c) => c.id));
-        const newOnes = savedComments.filter((c) => !existingIds.has(c.id));
-        return [...newOnes, ...prev];
-      });
-    }
-  }, [inventionId]);
-
   const handleLike = () => {
+    if (!invention) return;
     const isNow = toggleFavorite(invention.id);
     setHasLiked(isNow);
     setLikes((prev) => (isNow ? prev + 1 : Math.max(0, prev - 1)));
+    updateInventionStats(invention.id, { likesDelta: isNow ? 1 : -1 });
   };
 
   const handleWant = () => {
@@ -179,6 +175,7 @@ export default function InventionDetailPage() {
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!invention) return;
     if (!commentText.trim()) return;
 
     const newComment: CommentItem = {
@@ -219,6 +216,33 @@ export default function InventionDetailPage() {
       window.print();
     }
   };
+
+  if (!invention) {
+    return (
+      <div className="min-h-screen flex flex-col bg-stone-50 font-sans text-stone-900">
+        <Header />
+        <main className="max-w-xl mx-auto px-4 py-20 text-center flex-1 space-y-6">
+          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-2xl font-bold">
+            ?
+          </div>
+          <h1 className="text-2xl font-black text-stone-900">お探しの発明品が見つかりませんでした</h1>
+          <p className="text-sm text-stone-600 leading-relaxed">
+            指定されたIDの発明品は削除されたか、URLが正しくない可能性があります。
+          </p>
+          <div className="pt-4">
+            <Link
+              href="/inventions"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition text-sm shadow-md"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              発明品一覧に戻る
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 font-sans text-stone-900">

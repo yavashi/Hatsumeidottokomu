@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Header, Footer } from "@/components/Navigation";
-import { ShieldCheck, ArrowLeft, FileText } from "lucide-react";
+import { ShieldCheck, ArrowLeft } from "lucide-react";
 
 export const metadata = {
   title: "利用規約 | 発明ドットコム",

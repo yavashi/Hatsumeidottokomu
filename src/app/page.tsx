@@ -7,14 +7,9 @@ import {
   Sparkles, 
   Trophy, 
   Flame, 
-  Eye, 
-  ShoppingBag, 
   ArrowRight, 
   Lightbulb, 
   Compass, 
-  Heart,
-  TrendingUp,
-  Award,
   Users
 } from "lucide-react";
 
@@ -22,9 +17,6 @@ export default function Home() {
   // ランキング用ソート
   // 1. 商品化してほしいランキング（wantsCount順）
   const rankingByWants = [...mockInventions].sort((a, b) => b.wantsCount - a.wantsCount);
-  
-  // 2. 注目・急上昇（pageViews順）
-  const rankingByViews = [...mockInventions].sort((a, b) => b.pageViews - a.pageViews);
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 font-sans text-stone-900">

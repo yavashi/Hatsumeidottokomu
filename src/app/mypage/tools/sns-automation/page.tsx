@@ -5,13 +5,10 @@ import Link from "next/link";
 import { mockInventions } from "@/data/mock";
 import { 
   Share2, 
-  Sparkles, 
   ArrowLeft, 
   Calendar, 
-  Clock, 
   Copy, 
   Check, 
-  Send, 
   CheckCircle2,
   RefreshCw,
   ExternalLink

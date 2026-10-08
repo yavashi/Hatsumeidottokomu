@@ -110,7 +110,7 @@ export interface Invention {
   viewsCount?: number;
   isFeatured?: boolean;
   isPrivate?: boolean;
-  sections?: any[];
+  sections?: LayoutSection[];
 }
 
 // ネットショップ直販商品
