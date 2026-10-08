@@ -185,16 +185,25 @@ export const Footer: React.FC = () => {
           </div>
 
           <div className="space-y-2 text-xs">
-            <div className="font-bold text-white mb-2">アカウント・料金</div>
+            <div className="font-bold text-white mb-2">アカウント・法務</div>
             <div><Link href="/pricing" className="hover:text-amber-400 transition">料金プラン・永久アーカイブ</Link></div>
             <div><Link href="/signup" className="hover:text-amber-400 text-amber-400 font-bold transition">無料会員登録</Link></div>
             <div><Link href="/mypage" className="hover:text-amber-400 transition">マイページ</Link></div>
-            <div><Link href="/login" className="hover:text-amber-400 transition">ログイン</Link></div>
+            <div><Link href="/terms" className="hover:text-amber-400 transition">利用規約</Link></div>
+            <div><Link href="/privacy" className="hover:text-amber-400 transition">プライバシーポリシー</Link></div>
+            <div><Link href="/tokushoho" className="hover:text-amber-400 transition">特定商取引法に基づく表記</Link></div>
           </div>
         </div>
 
-        <div className="pt-6 border-t border-stone-800 text-center text-xs text-stone-500">
-          &copy; {new Date().getFullYear()} 発明ドットコム All rights reserved.
+        <div className="pt-6 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-500 gap-3">
+          <div>
+            &copy; {new Date().getFullYear()} 発明ドットコム All rights reserved.
+          </div>
+          <div className="flex gap-4">
+            <Link href="/terms" className="hover:text-stone-300 transition">利用規約</Link>
+            <Link href="/privacy" className="hover:text-stone-300 transition">プライバシーポリシー</Link>
+            <Link href="/tokushoho" className="hover:text-stone-300 transition">特定商取引法に基づく表記</Link>
+          </div>
         </div>
       </div>
     </footer>

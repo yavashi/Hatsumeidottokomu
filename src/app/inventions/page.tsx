@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Header, Footer } from "@/components/Navigation";
 import { InventionCard } from "@/components/InventionCard";
 import { mockInventions } from "@/data/mock";
+import { getAllInventions } from "@/lib/storage";
+import { Invention } from "@/types";
 import { 
   Search, 
   Layers, 
@@ -21,11 +23,16 @@ import {
 type SortOption = "wants" | "newest" | "views" | "likes";
 
 export default function InventionsListPage() {
+  const [inventionsList, setInventionsList] = useState<Invention[]>(mockInventions);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedProcess, setSelectedProcess] = useState<string>("all");
   const [onlyPatent, setOnlyPatent] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("wants");
+
+  useEffect(() => {
+    setInventionsList(getAllInventions());
+  }, []);
 
   const categories = [
     { id: "all", name: "すべて" },
@@ -48,15 +55,18 @@ export default function InventionsListPage() {
 
   // フィルタリング & ソート
   const filteredAndSortedInventions = useMemo(() => {
-    const result = mockInventions.filter((inv) => {
+    const result = inventionsList.filter((inv) => {
+      // 非公開アーカイブは除外
+      if (inv.isPrivate) return false;
+
       // 検索キーワード
       if (searchQuery.trim() !== "") {
         const query = searchQuery.toLowerCase();
-        const matchTitle = inv.title.toLowerCase().includes(query);
-        const matchCatch = inv.catchphrase.toLowerCase().includes(query);
-        const matchSummary = inv.summary.toLowerCase().includes(query);
-        const matchTag = inv.tags.some((t) => t.toLowerCase().includes(query));
-        const matchMaterial = inv.materials.some((m) => m.toLowerCase().includes(query));
+        const matchTitle = (inv.title || "").toLowerCase().includes(query);
+        const matchCatch = (inv.catchphrase || inv.tagline || "").toLowerCase().includes(query);
+        const matchSummary = (inv.summary || inv.solutionSummary || "").toLowerCase().includes(query);
+        const matchTag = (inv.tags || []).some((t) => t.toLowerCase().includes(query));
+        const matchMaterial = (inv.materials || []).some((m) => m.toLowerCase().includes(query));
         if (!matchTitle && !matchCatch && !matchSummary && !matchTag && !matchMaterial) {
           return false;
         }
@@ -68,7 +78,8 @@ export default function InventionsListPage() {
       }
 
       // 加工・技術
-      if (selectedProcess !== "all" && !inv.processes.includes(selectedProcess)) {
+      const procs = inv.processes || (inv.process ? [inv.process] : []);
+      if (selectedProcess !== "all" && !procs.includes(selectedProcess)) {
         return false;
       }
 
@@ -83,13 +94,15 @@ export default function InventionsListPage() {
     // ソート順
     result.sort((a, b) => {
       if (sortBy === "wants") {
-        return b.wantsCount - a.wantsCount; // 商品化希望数順（人気順）
+        return (b.wantsCount || 0) - (a.wantsCount || 0); // 商品化希望数順（人気順）
       } else if (sortBy === "newest") {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // 新着順
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(); // 新着順
       } else if (sortBy === "views") {
-        return b.pageViews - a.pageViews; // 閲覧数順
+        const aViews = (a as any).pageViews ?? a.viewsCount ?? 0;
+        const bViews = (b as any).pageViews ?? b.viewsCount ?? 0;
+        return bViews - aViews; // 閲覧数順
       } else if (sortBy === "likes") {
-        return b.likesCount - a.likesCount; // いいね数順
+        return (b.likesCount || 0) - (a.likesCount || 0); // いいね数順
       }
       return 0;
     });

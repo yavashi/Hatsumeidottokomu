@@ -1,11 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Header, Footer } from "@/components/Navigation";
 import { DynamicSectionRenderer } from "@/components/DynamicSectionRenderer";
 import { mockInventions, mockInventors } from "@/data/mock";
+import { 
+  findInventionById, 
+  toggleFavorite, 
+  getFavoriteIds, 
+  getCommentsForInvention, 
+  addCommentForInvention,
+  CustomComment
+} from "@/lib/storage";
+import { Invention } from "@/types";
 import { 
   Heart, 
   ShoppingBag, 
@@ -45,8 +54,12 @@ export default function InventionDetailPage() {
   const params = useParams();
   const inventionId = params.id as string;
 
-  const invention = mockInventions.find((i) => i.id === inventionId) || mockInventions[0];
-  const inventor = mockInventors.find((inv) => inv.id === invention.inventorId);
+  const [currentInvention, setCurrentInvention] = useState<Invention>(() => {
+    return mockInventions.find((i) => i.id === inventionId) || mockInventions[0];
+  });
+
+  const invention = currentInvention;
+  const inventor = mockInventors.find((inv) => inv.id === invention.inventorId) || mockInventors[0];
 
   // ステート管理
   const [likes, setLikes] = useState(invention.likesCount);
@@ -105,14 +118,31 @@ export default function InventionDetailPage() {
     "デザインが温かい"
   ];
 
-  const handleLike = () => {
-    if (!hasLiked) {
-      setLikes((prev) => prev + 1);
-      setHasLiked(true);
-    } else {
-      setLikes((prev) => prev - 1);
-      setHasLiked(false);
+  // クライアント側での動的データ読み込み（カスタム発明品・お気に入り・コメント）
+  useEffect(() => {
+    const loaded = findInventionById(inventionId);
+    if (loaded) {
+      setCurrentInvention(loaded);
+      setLikes(loaded.likesCount);
+      setWants(loaded.wantsCount);
     }
+    const favs = getFavoriteIds();
+    setHasLiked(favs.includes(inventionId));
+
+    const savedComments = getCommentsForInvention(inventionId);
+    if (savedComments.length > 0) {
+      setComments((prev) => {
+        const existingIds = new Set(prev.map((c) => c.id));
+        const newOnes = savedComments.filter((c) => !existingIds.has(c.id));
+        return [...newOnes, ...prev];
+      });
+    }
+  }, [inventionId]);
+
+  const handleLike = () => {
+    const isNow = toggleFavorite(invention.id);
+    setHasLiked(isNow);
+    setLikes((prev) => (isNow ? prev + 1 : Math.max(0, prev - 1)));
   };
 
   const handleWant = () => {
@@ -121,7 +151,7 @@ export default function InventionDetailPage() {
       setHasWanted(true);
       setShowWantModal(true);
     } else {
-      setWants((prev) => prev - 1);
+      setWants((prev) => Math.max(0, prev - 1));
       setHasWanted(false);
     }
   };
@@ -159,6 +189,17 @@ export default function InventionDetailPage() {
       createdAt: "たった今",
       likes: 0
     };
+
+    // ローカルストレージに永続化
+    addCommentForInvention({
+      id: newComment.id,
+      inventionId: invention.id,
+      author: newComment.author,
+      text: newComment.text,
+      presetBadge: newComment.presetBadge,
+      createdAt: newComment.createdAt,
+      likes: 0,
+    });
 
     setComments([newComment, ...comments]);
     setCommentText("");

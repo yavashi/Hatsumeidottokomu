@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Header, Footer } from "@/components/Navigation";
 import { mockExperts, mockInventions } from "@/data/mock";
+import { saveExpertInquiry } from "@/lib/storage";
 import { 
   Wrench, 
   Scale, 
@@ -41,6 +42,20 @@ export default function ExpertsPage() {
 
   const handleSubmitInquiry = (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedExpert) {
+      saveExpertInquiry({
+        id: `inq-${Date.now()}`,
+        expertId: selectedExpert.id,
+        expertName: selectedExpert.companyName,
+        expertRole: selectedExpert.roleLabel,
+        inventionTitle: selectedInvention,
+        topic: inquiryText.slice(0, 30) + "...",
+        budget: selectedExpert.samplePrice,
+        message: inquiryText,
+        status: "専門家確認中",
+        createdAt: "たった今",
+      });
+    }
     setInquirySubmitted(true);
   };
 

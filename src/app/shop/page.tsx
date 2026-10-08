@@ -37,33 +37,37 @@ export default function ShopPage() {
     e.preventDefault();
     if (!selectedProduct) return;
 
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "shop_item",
-          title: selectedProduct.title,
-          price: selectedProduct.price,
-          shippingFee: selectedProduct.shippingFee,
-          metadata: {
-            productId: selectedProduct.id,
-            inventorName: selectedProduct.inventorName,
-            buyerName: buyerInfo.name,
-            address: buyerInfo.address,
-            paymentMethod: buyerInfo.paymentMethod,
-          },
-        }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        setPurchaseStep("complete");
+    if (buyerInfo.paymentMethod === "credit_card") {
+      try {
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "shop_item",
+            title: selectedProduct.title,
+            price: selectedProduct.price,
+            shippingFee: selectedProduct.shippingFee,
+            metadata: {
+              productId: selectedProduct.id,
+              inventorName: selectedProduct.inventorName,
+              buyerName: buyerInfo.name,
+              address: buyerInfo.address,
+              paymentMethod: buyerInfo.paymentMethod,
+            },
+          }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      } catch (err) {
+        console.error("Stripe checkout error:", err);
       }
-    } catch {
-      setPurchaseStep("complete");
     }
+
+    // 銀行振込・コンビニ前払い、またはフォールバック時は完了画面を表示
+    setPurchaseStep("complete");
   };
 
   return (
@@ -489,9 +493,21 @@ export default function ShopPage() {
                   </p>
                 </div>
 
-                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 text-xs text-stone-600 text-left space-y-1">
+                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 text-xs text-stone-600 text-left space-y-2">
                   <p className="font-semibold text-stone-800">発送予定時期:</p>
-                  <p>約 {selectedProduct.leadTimeDays} 日前後で発送通知メールをお送りします。</p>
+                  <p>約 {selectedProduct.leadTimeDays} 日前後で工房から発送通知メールをお送りします。</p>
+
+                  {buyerInfo.paymentMethod === "bank_transfer" && (
+                    <div className="pt-2 border-t border-stone-200 text-[11px] text-amber-900 font-medium">
+                      💡 【銀行振込案内】GMOあおぞらネット銀行 発明ドットコム支店（普）1234567 宛へ、5営業日以内にお振込みください。（振込名義: {buyerInfo.name} 様）
+                    </div>
+                  )}
+
+                  {buyerInfo.paymentMethod === "convenience" && (
+                    <div className="pt-2 border-t border-stone-200 text-[11px] text-amber-900 font-medium">
+                      💡 【コンビニ決済番号】お客様番号: 7892-4156-0021（お近くのセブン-イレブン、ローソン、ファミリーマート等の端末でお支払いください）
+                    </div>
+                  )}
                 </div>
 
                 <button

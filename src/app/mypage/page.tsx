@@ -1,9 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Header, Footer } from "@/components/Navigation";
 import { mockInventions, mockInventors } from "@/data/mock";
+import { 
+  getUserProfile, 
+  saveUserProfile, 
+  getSavedCustomInventions, 
+  deleteCustomInvention, 
+  saveCustomInvention, 
+  getFavoriteIds, 
+  getAllInventions, 
+  getExpertInquiries,
+  UserProfile,
+  ExpertInquiry
+} from "@/lib/storage";
+import { Invention } from "@/types";
 import { 
   User, 
   PlusCircle, 
@@ -12,22 +25,86 @@ import {
   Sparkles, 
   Settings, 
   ExternalLink, 
-  Lightbulb,
-  ThumbsUp,
-  MessageSquare,
-  Clock
+  Lightbulb, 
+  ThumbsUp, 
+  MessageSquare, 
+  Clock,
+  Edit2,
+  Trash2,
+  Lock,
+  Globe,
+  Share2,
+  CheckCircle2,
+  X
 } from "lucide-react";
 
 export default function MyPage() {
-  // モックのアカウントタイプ切り替え（体験用）
   const [activeTab, setActiveTab] = useState<"inventor" | "general">("inventor");
+  const [profile, setProfile] = useState<UserProfile>(getUserProfile());
+  const [myInventions, setMyInventions] = useState<Invention[]>([]);
+  const [favoriteInventions, setFavoriteInventions] = useState<Invention[]>([]);
+  const [expertInquiries, setExpertInquiries] = useState<ExpertInquiry[]>([]);
 
-  // 田中義男さん（発明家）のデータを仮のアカウントデータとする
-  const currentInventor = mockInventors[0];
-  const myInventions = mockInventions.filter((inv) => inv.inventorId === currentInventor.id);
+  // プロフィール編集モーダル
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [editForm, setEditForm] = useState<UserProfile>(profile);
 
-  // お気に入りとして仮に登録した発明品（一般人目線）
-  const favoriteInventions = mockInventions.slice(1, 3);
+  const loadData = () => {
+    const p = getUserProfile();
+    setProfile(p);
+    setEditForm(p);
+
+    // 自分の発明品: カスタム登録品 + 田中義男さんのモック
+    const custom = getSavedCustomInventions();
+    const defaultMocks = mockInventions.filter((inv) => inv.inventorId === "inv-01");
+    setMyInventions([...custom, ...defaultMocks]);
+
+    // お気に入り発明品
+    const favIds = getFavoriteIds();
+    const all = getAllInventions();
+    const favs = all.filter((inv) => favIds.includes(inv.id));
+    setFavoriteInventions(favs);
+
+    // 専門家相談履歴
+    setExpertInquiries(getExpertInquiries());
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // プロフィール保存ハンドラー
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveUserProfile(editForm);
+    setProfile(editForm);
+    setShowEditProfileModal(false);
+  };
+
+  // 公開・非公開切り替え
+  const handleTogglePrivacy = (inv: Invention) => {
+    const isNowPrivate = !inv.isPrivate;
+    const updated: Invention = {
+      ...inv,
+      isPrivate: isNowPrivate,
+      status: isNowPrivate ? "draft" : "published",
+    };
+    saveCustomInvention(updated);
+    loadData();
+  };
+
+  // 発明品削除
+  const handleDeleteInvention = (id: string, title: string) => {
+    if (confirm(`「${title}」をアーカイブから削除しますか？\n（一度削除すると元に戻せません）`)) {
+      deleteCustomInvention(id);
+      loadData();
+    }
+  };
+
+  const totalViews = myInventions.reduce((sum, inv) => sum + (inv.pageViews || 0), 1240);
+  const totalWants = myInventions.reduce((sum, inv) => sum + (inv.wantsCount || 0), 328);
+
+  const latestInquiry = expertInquiries[0];
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 text-stone-900 font-sans">
@@ -39,29 +116,39 @@ export default function MyPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-5">
               <img
-                src={currentInventor.avatarUrl}
-                alt={currentInventor.name}
+                src={profile.avatarUrl}
+                alt={profile.name}
                 className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-300 shadow-sm"
               />
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xl md:text-2xl font-black text-stone-900">
-                    {currentInventor.name}
+                    {profile.name}
                   </span>
                   <span className="text-xs bg-amber-100 text-amber-900 font-bold px-2.5 py-0.5 rounded-full border border-amber-200">
                     {activeTab === "inventor" ? "発明家会員" : "一般会員"}
                   </span>
+                  <button
+                    onClick={() => {
+                      setEditForm(profile);
+                      setShowEditProfileModal(true);
+                    }}
+                    className="text-stone-400 hover:text-amber-700 p-1 rounded-lg transition"
+                    title="プロフィールを編集"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
                 </div>
                 <p className="text-xs text-stone-500 font-medium">
-                  {currentInventor.nickname} ・ {currentInventor.location}
+                  {profile.nickname} ・ {profile.location}
                 </p>
                 <p className="text-xs text-stone-400 mt-1">
-                  登録日: 2026年1月15日
+                  登録日: {profile.registeredDate}
                 </p>
               </div>
             </div>
 
-            {/* 表示モード切り替えスイッチ（プロトタイプ体験用） */}
+            {/* 表示モード切り替えスイッチ */}
             <div className="flex items-center gap-3 bg-stone-100 p-1.5 rounded-2xl self-start md:self-center border border-stone-200">
               <button
                 onClick={() => setActiveTab("inventor")}
@@ -90,7 +177,7 @@ export default function MyPage() {
         {/* --- 発明家ビュー --- */}
         {activeTab === "inventor" && (
           <div className="space-y-8">
-            {/* クイックアクション & 閲覧実績（フィードバック） */}
+            {/* クイックアクション & 閲覧実績 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-xs">
                 <span className="text-xs font-bold text-stone-500 flex items-center gap-1.5">
@@ -98,7 +185,7 @@ export default function MyPage() {
                   あなたの発明の総閲覧数
                 </span>
                 <p className="text-2xl font-black text-stone-900 mt-2">
-                  1,240 <span className="text-xs font-normal text-stone-500">回</span>
+                  {totalViews.toLocaleString()} <span className="text-xs font-normal text-stone-500">回</span>
                 </p>
                 <p className="text-[11px] text-emerald-600 font-bold mt-1">
                   今週 +48回 閲覧されました
@@ -111,7 +198,7 @@ export default function MyPage() {
                   獲得した「商品化希望」
                 </span>
                 <p className="text-2xl font-black text-amber-600 mt-2">
-                  328 <span className="text-xs font-normal text-stone-500">人</span>
+                  {totalWants.toLocaleString()} <span className="text-xs font-normal text-stone-500">人</span>
                 </p>
                 <p className="text-[11px] text-stone-500 mt-1">
                   企業向け推薦スコア：高
@@ -154,32 +241,34 @@ export default function MyPage() {
             </div>
 
             {/* 進行中の専門家相談ステータスバナー */}
-            <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-200/80 text-amber-900 flex items-center justify-center font-bold text-sm shrink-0">
-                  工
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-stone-900">
-                      高橋精機試作工房（大田区）様へ試作相談中
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                      返信待ち
-                    </span>
+            {latestInquiry && (
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-200/80 text-amber-900 flex items-center justify-center font-bold text-sm shrink-0">
+                    工
                   </div>
-                  <p className="text-[11px] text-stone-500 mt-0.5">
-                    「らくらく開栓テコオープナー」の真鍮切削について相談メッセージを送信済み（NDA保護中）
-                  </p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-stone-900">
+                        {latestInquiry.expertName} 様へ試作相談中
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                        {latestInquiry.status}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-500 mt-0.5">
+                      「{latestInquiry.inventionTitle}」について相談中（秘密保持NDA保護中）
+                    </p>
+                  </div>
                 </div>
+                <Link
+                  href="/experts"
+                  className="text-xs font-bold text-amber-800 hover:text-amber-900 bg-white px-3 py-1.5 rounded-lg border border-amber-200 shadow-2xs whitespace-nowrap"
+                >
+                  専門家一覧を見る →
+                </Link>
               </div>
-              <Link
-                href="/experts"
-                className="text-xs font-bold text-amber-800 hover:text-amber-900 bg-white px-3 py-1.5 rounded-lg border border-amber-200 shadow-2xs whitespace-nowrap"
-              >
-                専門家一覧を見る →
-              </Link>
-            </div>
+            )}
 
             {/* 登録した発明品一覧 */}
             <div className="bg-white rounded-3xl border border-stone-200 p-6 md:p-8 shadow-xs">
@@ -203,65 +292,106 @@ export default function MyPage() {
               </div>
 
               <div className="space-y-4">
-                {myInventions.map((inv) => (
-                  <div
-                    key={inv.id}
-                    className="border border-stone-200 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-amber-300 transition bg-stone-50/50"
-                  >
-                    <div className="flex items-start sm:items-center gap-4">
-                      <img
-                        src={inv.primaryImageUrl}
-                        alt={inv.title}
-                        className="w-16 h-16 rounded-xl object-cover border border-stone-200 shrink-0"
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md">
-                            公開中
-                          </span>
-                          <span className="text-xs text-stone-400">
-                            {inv.category}
-                          </span>
-                        </div>
-                        <h3 className="font-bold text-sm text-stone-900 mt-1">
-                          {inv.title}
-                        </h3>
-                        <p className="text-xs text-stone-500 line-clamp-1">
-                          {inv.catchphrase}
-                        </p>
-                      </div>
-                    </div>
+                {myInventions.map((inv) => {
+                  const isCustom = inv.id.startsWith("inv-custom");
+                  const imgUrl = inv.primaryImageUrl || (inv as any).thumbnailUrl || "";
+                  const catchText = inv.catchphrase || (inv as any).tagline || "";
 
-                    <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-stone-200">
-                      <div className="text-right text-xs">
-                        <p className="font-bold text-stone-700">{inv.pageViews} views</p>
-                        <p className="text-[11px] text-amber-700 font-bold">{inv.wantsCount} 欲しい</p>
+                  return (
+                    <div
+                      key={inv.id}
+                      className="border border-stone-200 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-amber-300 transition bg-stone-50/50"
+                    >
+                      <div className="flex items-start sm:items-center gap-4">
+                        <img
+                          src={imgUrl}
+                          alt={inv.title}
+                          className="w-16 h-16 rounded-xl object-cover border border-stone-200 shrink-0"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            {inv.isPrivate ? (
+                              <span className="text-[11px] bg-stone-200 text-stone-700 font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <Lock className="w-3 h-3" />
+                                非公開下書き（特許保護）
+                              </span>
+                            ) : (
+                              <span className="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <Globe className="w-3 h-3" />
+                                公開中
+                              </span>
+                            )}
+                            <span className="text-xs text-stone-400">
+                              {inv.category}
+                            </span>
+                            {isCustom && (
+                              <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 font-bold px-1.5 py-0.2 rounded">
+                                新規登録
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-bold text-sm text-stone-900 mt-1">
+                            {inv.title}
+                          </h3>
+                          <p className="text-xs text-stone-500 line-clamp-1">
+                            {catchText}
+                          </p>
+                        </div>
                       </div>
-                      <Link
-                        href={`/inventions/${inv.id}`}
-                        className="text-xs font-bold text-stone-700 hover:text-amber-700 bg-white border border-stone-200 hover:border-amber-300 px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-2xs"
-                      >
-                        <span>公開ページを見る</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-stone-400" />
-                      </Link>
+
+                      <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-stone-200">
+                        <div className="text-right text-xs mr-2">
+                          <p className="font-bold text-stone-700">{inv.pageViews || 1} views</p>
+                          <p className="text-[11px] text-amber-700 font-bold">{inv.wantsCount || 1} 欲しい</p>
+                        </div>
+
+                        {/* 公開/非公開切り替え */}
+                        {isCustom && (
+                          <button
+                            onClick={() => handleTogglePrivacy(inv)}
+                            className="text-xs text-stone-600 hover:text-stone-900 bg-white border border-stone-200 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1"
+                            title={inv.isPrivate ? "一般公開に変更" : "非公開下書きに変更"}
+                          >
+                            {inv.isPrivate ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                            <span className="hidden lg:inline">{inv.isPrivate ? "公開する" : "非公開にする"}</span>
+                          </button>
+                        )}
+
+                        {/* 削除 */}
+                        {isCustom && (
+                          <button
+                            onClick={() => handleDeleteInvention(inv.id, inv.title)}
+                            className="text-xs text-rose-600 hover:text-rose-800 bg-white border border-stone-200 hover:border-rose-300 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1"
+                            title="削除"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        <Link
+                          href={`/inventions/${inv.id}`}
+                          className="text-xs font-bold text-stone-700 hover:text-amber-700 bg-white border border-stone-200 hover:border-amber-300 px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-2xs whitespace-nowrap"
+                        >
+                          <span>ページを見る</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-stone-400" />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            {/* 発明家向け支援ツール・設定 */}
-            <div className="bg-white rounded-3xl border border-stone-200 p-6 md:p-8 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b pb-4 border-stone-100">
-                <div>
-                  <h2 className="text-lg font-black text-stone-900 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-600" />
-                    発明家の活動・販促支援ツール
-                  </h2>
-                  <p className="text-xs text-stone-500 mt-0.5">
-                    展示会やシニアクラブでの配布、SNSでの拡散、通知の受取設定
-                  </p>
-                </div>
+            {/* 発明家向け実務支援ツールスイート */}
+            <div className="bg-white rounded-3xl border border-stone-200 p-6 md:p-8 shadow-xs">
+              <div className="mb-6">
+                <h3 className="text-lg font-black text-stone-900 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-amber-600" />
+                  実務支援ツールスイート
+                </h3>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  チラシ印刷や町工場連携など、あなたの発明を世の中に広めるための支援機能です
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -270,18 +400,18 @@ export default function MyPage() {
                   className="p-5 rounded-2xl border border-stone-200 hover:border-amber-400 hover:bg-amber-50/30 transition flex flex-col justify-between space-y-3 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center group-hover:scale-105 transition">
-                    <Sparkles className="w-5 h-5" />
+                    <Share2 className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="font-bold text-stone-900 text-sm group-hover:text-amber-800 transition">
-                      チラシ・名刺AI印刷
+                      AIチラシ・名刺印刷
                     </h4>
                     <p className="text-[11px] text-stone-500 mt-1">
-                      A4カラーチラシや名刺を自動作成＆印刷所へデータ入稿
+                      A4チラシや名刺を自動生成。展示会や知人への配布に
                     </p>
                   </div>
                   <span className="text-xs font-bold text-amber-700 flex items-center gap-1 pt-1">
-                    ツールを開く →
+                    キットを開く →
                   </span>
                 </Link>
 
@@ -290,11 +420,11 @@ export default function MyPage() {
                   className="p-5 rounded-2xl border border-stone-200 hover:border-amber-400 hover:bg-amber-50/30 transition flex flex-col justify-between space-y-3 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center group-hover:scale-105 transition">
-                    <Clock className="w-5 h-5" />
+                    <MessageSquare className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="font-bold text-stone-900 text-sm group-hover:text-blue-800 transition">
-                      SNS簡単・自動ポスト
+                      SNS自動ポスト
                     </h4>
                     <p className="text-[11px] text-stone-500 mt-1">
                       XやLINEへワンタップ投稿。定期配信でファン獲得
@@ -369,7 +499,6 @@ export default function MyPage() {
           </div>
         )}
 
-
         {/* --- 一般人・応援ビュー --- */}
         {activeTab === "general" && (
           <div className="space-y-8">
@@ -384,32 +513,48 @@ export default function MyPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {favoriteInventions.map((inv) => (
-                  <Link
-                    key={inv.id}
-                    href={`/inventions/${inv.id}`}
-                    className="border border-stone-200 rounded-2xl p-4 flex items-center gap-4 hover:border-amber-300 hover:shadow-xs transition bg-stone-50/50 group"
-                  >
-                    <img
-                      src={inv.primaryImageUrl}
-                      alt={inv.title}
-                      className="w-16 h-16 rounded-xl object-cover border border-stone-200 shrink-0 group-hover:scale-105 transition"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-md">
-                        {inv.category}
-                      </span>
-                      <h3 className="font-bold text-sm text-stone-900 truncate mt-1 group-hover:text-amber-800 transition">
-                        {inv.title}
-                      </h3>
-                      <p className="text-xs text-stone-500 truncate mt-0.5">
-                        {inv.catchphrase}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              {favoriteInventions.length === 0 ? (
+                <div className="text-center py-12 text-stone-500 text-xs">
+                  まだお気に入りに登録された発明品がありません。
+                  <div className="mt-3">
+                    <Link href="/inventions" className="text-amber-700 font-bold hover:underline">
+                      発明品一覧から気になる作品を探す →
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {favoriteInventions.map((inv) => {
+                    const imgUrl = inv.primaryImageUrl || (inv as any).thumbnailUrl || "";
+                    const catchText = inv.catchphrase || (inv as any).tagline || "";
+
+                    return (
+                      <Link
+                        key={inv.id}
+                        href={`/inventions/${inv.id}`}
+                        className="border border-stone-200 rounded-2xl p-4 flex items-center gap-4 hover:border-amber-300 hover:shadow-xs transition bg-stone-50/50 group"
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={inv.title}
+                          className="w-16 h-16 rounded-xl object-cover border border-stone-200 shrink-0 group-hover:scale-105 transition"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-md">
+                            {inv.category}
+                          </span>
+                          <h3 className="font-bold text-sm text-stone-900 truncate mt-1 group-hover:text-amber-800 transition">
+                            {inv.title}
+                          </h3>
+                          <p className="text-xs text-stone-500 truncate mt-0.5">
+                            {catchText}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="bg-amber-50/60 rounded-3xl border border-amber-200/80 p-6 text-center max-w-lg mx-auto">
@@ -431,6 +576,82 @@ export default function MyPage() {
           </div>
         )}
       </main>
+
+      {/* プロフィール編集モーダル */}
+      {showEditProfileModal && (
+        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-stone-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-stone-900">プロフィール編集</h3>
+              <button
+                onClick={() => setShowEditProfileModal(false)}
+                className="text-stone-400 hover:text-stone-600 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">お名前・屋号</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">愛称・肩書き</label>
+                <input
+                  type="text"
+                  value={editForm.nickname}
+                  onChange={(e) => setEditForm({ ...editForm, nickname: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">工房・活動地域</label>
+                <input
+                  type="text"
+                  value={editForm.location}
+                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">自己紹介・ものづくりへの想い</label>
+                <textarea
+                  rows={3}
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfileModal(false)}
+                  className="w-1/3 py-2.5 rounded-xl border border-stone-300 hover:bg-stone-100 font-bold text-xs text-stone-700 transition"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="submit"
+                  className="w-2/3 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition shadow-sm"
+                >
+                  保存する
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

@@ -95,9 +95,22 @@ export interface Invention {
     leadTimeDays: number;
   };
   
-  status: 'draft' | 'ai_generated' | 'published';
+  status: 'draft' | 'ai_generated' | 'published' | string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+
+  // 互換性およびカスタム登録用オプショナルフィールド
+  tagline?: string;
+  solutionSummary?: string;
+  problemStatement?: string;
+  story?: string;
+  thumbnailUrl?: string;
+  galleryUrls?: string[];
+  process?: string[];
+  viewsCount?: number;
+  isFeatured?: boolean;
+  isPrivate?: boolean;
+  sections?: any[];
 }
 
 // ネットショップ直販商品

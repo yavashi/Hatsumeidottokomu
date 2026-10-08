@@ -29,6 +29,8 @@ import {
   Check,
   X
 } from "lucide-react";
+import { saveCustomInvention } from "@/lib/storage";
+import { Invention } from "@/types";
 
 interface ChatMessage {
   id: string;
@@ -46,6 +48,7 @@ function createMessageId(prefix: string): string {
 
 export default function RegisterInventionPage() {
   const [step, setStep] = useState<"interview" | "analyzing" | "preview" | "complete">("interview");
+  const [createdInventionId, setCreatedInventionId] = useState<string>("inno-01");
 
   // 法的保護：未出願時の警告モーダル
   const [showPatentWarningModal, setShowPatentWarningModal] = useState(false);
@@ -624,11 +627,41 @@ export default function RegisterInventionPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setStep("complete")}
-                className="w-2/3 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-xs md:text-sm"
+                onClick={() => {
+                  const newId = `inv-custom-${Date.now()}`;
+                  const customInv: Invention = {
+                    id: newId,
+                    inventorId: "inv-01",
+                    title: inventorAnswers.titleOrTopic || "手作りアイデア便利ツール",
+                    catchphrase: editableCatchphrase || aiResult?.catchphrase || "日常のひと工夫から生まれた愛情の発明品",
+                    summary: editableSummary || aiResult?.summary || "手作りの工夫と温もりによって、誰でも安全・手軽に使える機構を設計。",
+                    description: `【開発の背景】\n${inventorAnswers.motivation || "長年の思いを込めて開発に着手しました。"}\n\n【工夫した点・こだわり】\n${inventorAnswers.uniqueness || "試行錯誤を繰り返しながら現在の形状にたどり着きました。"}\n\n【今後の展望】\n${inventorAnswers.statusAndWish || "多くの方のお役に立てるよう、商品化やお届けを目指しています。"}`,
+                    primaryImageUrl: inventorAnswers.uploadedPhotoUrl || "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800",
+                    additionalImages: inventorAnswers.uploadedPhotoUrl ? [inventorAnswers.uploadedPhotoUrl] : [],
+                    hasPatent: patentAgreed,
+                    isCommercialized: false,
+                    materials: aiResult?.materials || ["手作り加工部品", "試作パーツ"],
+                    processes: aiResult?.processes || ["手作業仕上げ", "試作検証"],
+                    category: aiResult?.category || "日用品",
+                    tags: ["新着発明", "手作り試作", "シニアアイデア"],
+                    pageViews: 1,
+                    likesCount: 1,
+                    wantsCount: 1,
+                    status: isPrivateArchiveMode ? "draft" : "published",
+                    createdAt: new Date().toISOString().split("T")[0],
+                    isPrivate: isPrivateArchiveMode,
+                    tagline: editableCatchphrase || aiResult?.catchphrase || "日常のひと工夫から生まれた愛情の発明品",
+                    thumbnailUrl: inventorAnswers.uploadedPhotoUrl || "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800",
+                  };
+
+                  saveCustomInvention(customInv);
+                  setCreatedInventionId(newId);
+                  setStep("complete");
+                }}
+                className="w-2/3 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-xs md:text-sm cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>この構成で公開する（無料）</span>
+                <span>{isPrivateArchiveMode ? "非公開アーカイブとして保存する" : "この構成で公開する（無料）"}</span>
               </button>
             </div>
           </div>
@@ -641,10 +674,12 @@ export default function RegisterInventionPage() {
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <h2 className="text-2xl md:text-3xl font-black text-stone-900 mb-2">
-              発明の掲載が完了しました！
+              {isPrivateArchiveMode ? "非公開アーカイブに保存されました！" : "発明の掲載が完了しました！"}
             </h2>
             <p className="text-xs md:text-sm text-stone-600 max-w-md mx-auto leading-relaxed mb-6">
-              AIとの対話から生まれた魅力的な構成で、あなたの生涯の発明が永久アーカイブに保存されました。
+              {isPrivateArchiveMode
+                ? "特許法第29条に基づく新規性喪失を防ぐため、第三者からは見えない安全な下書き保管庫にタイムスタンプ付きで保存されました。"
+                : "AIとの対話から生まれた魅力的な構成で、あなたの生涯の発明が永久アーカイブに保存されました。"}
             </p>
 
             {/* 家族や近所への共有ボタン */}
@@ -656,7 +691,7 @@ export default function RegisterInventionPage() {
                 <button
                   onClick={() => {
                     if (typeof window !== "undefined") {
-                      navigator.clipboard?.writeText(window.location.origin + "/inventions/inno-01");
+                      navigator.clipboard?.writeText(`${window.location.origin}/inventions/${createdInventionId}`);
                       alert("ページのURLをコピーしました！LINEやメールに貼り付けてご家族に送れます。");
                     }
                   }}
@@ -679,10 +714,10 @@ export default function RegisterInventionPage() {
 
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Link
-                href="/inventions/inno-01"
+                href={`/inventions/${createdInventionId}`}
                 className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow transition text-xs md:text-sm"
               >
-                完成した公開ページを見る
+                完成したページを見る
               </Link>
               <Link
                 href="/mypage"
