@@ -235,7 +235,7 @@ export default function MyPage() {
                     新しい発明を世の中に
                   </span>
                   <p className="text-xs font-black mt-1 leading-snug">
-                    AIと対話してWebページ作成
+                    AI対話・手書き申込用紙から作成
                   </p>
                 </div>
                 <Link
@@ -571,7 +571,7 @@ export default function MyPage() {
                 あなたも発明をお持ちですか？
               </h3>
               <p className="text-xs text-stone-600 mt-1 mb-4 leading-relaxed">
-                ちょっとした日常の工夫や試作品があれば、AIと簡単に対話するだけでページが作れます。
+                ちょっとした日常の工夫や試作品があれば登録できます。AIとの対話、またはAIを使わない手入力申込用紙のどちらでも選べます。
               </p>
               <Link
                 href="/mypage/inventions/new"
