@@ -58,6 +58,8 @@
   - [x] Vercel 本番ビルド＆デプロイ完了（本番URL: `https://hatsumeidottokomu.vercel.app`）
   - [x] 実稼働HTTPレスポンス・レンダリング検証完了
 
+- [x] **TASK-25 ショップ (`/shop`) および専門家・試作 (`/experts`) への共通Header/Footer追加・統一レイアウト化**: 全主要ページでサイトロゴ・共通ナビゲーション・フッターを表示統一（全21ルートビルド検証済み）
+
 ---
 
 ## 2. 進行中 / 次期候補タスク (Backlog / Draft)

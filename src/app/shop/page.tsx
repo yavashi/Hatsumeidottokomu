@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Header, Footer } from "@/components/Navigation";
 import { mockShopProducts } from "@/data/mock";
 import { ShoppingBag, CheckCircle2, Truck, ShieldCheck, Heart, Sparkles, Filter, ChevronRight, X } from "lucide-react";
 
@@ -66,8 +67,9 @@ export default function ShopPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-10">
+    <div className="min-h-screen flex flex-col bg-stone-50 font-sans text-stone-900">
+      <Header />
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-10">
         
         {/* ヘッダーバナー */}
         <div className="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 rounded-3xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden">
@@ -264,7 +266,9 @@ export default function ShopPage() {
           </Link>
         </div>
 
-      </div>
+      </main>
+
+      <Footer />
 
       {/* 購入手続きモーダル */}
       {selectedProduct && (

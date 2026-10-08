@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Header, Footer } from "@/components/Navigation";
 import { mockExperts, mockInventions } from "@/data/mock";
 import { 
   Wrench, 
@@ -44,8 +45,9 @@ export default function ExpertsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-10">
+    <div className="min-h-screen flex flex-col bg-stone-50 font-sans text-stone-900">
+      <Header />
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 space-y-10">
 
         {/* ヒーローヘッダー */}
         <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-amber-950 rounded-3xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden">
@@ -266,7 +268,9 @@ export default function ExpertsPage() {
           </button>
         </div>
 
-      </div>
+      </main>
+
+      <Footer />
 
       {/* 相談・見積もり依頼モーダル */}
       {selectedExpert && (
