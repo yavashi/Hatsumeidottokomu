@@ -48,6 +48,12 @@
     - [x] 通知設定: 夜間おやすみモード（21:00〜翌朝8:00ミュート）追加
 - [x] **グローバルナビゲーション・マイページ連動強化**: Header/Footerへの各新機能導線配備、マイページへのツールスイート統合
 
+- [x] **実サービス化・決済・本番接続の完了（全21ルートビルド検証済み）**:
+  - [x] **TASK-20 Stripe 決済基盤 (`/api/checkout`, `/checkout/success`)**: 直販ショップ購入、スタンダードプラン（月額550円）、永久アーカイブ保存パック（29,800円）の決済セッション生成・領収書印刷・フォールバックシミュレーション完備
+  - [x] **TASK-21 Gemini 2.5 Flash API 実接続 (`/api/gemini/interview`)**: Google GenAI SDK による対話型傾聴インタビュー、構造化JSON抽出、APIキー未設定時のスマートフォールバック
+  - [x] **TASK-22 Supabase / PostgreSQL 基盤 (`supabase/schema.sql`, `src/lib/supabase.ts`, `src/lib/db.ts`)**: 6大テーブルスキーマ設計、RLSセキュリティポリシー、統一データアクセス層
+  - [x] **TASK-23 本番デプロイ準備**: Git初期化・初回コミット完了、`.env.example` テンプレート、`vercel.json` 構成
+
 ---
 
 ## 2. 進行中 / 次期候補タスク (Backlog / Draft)
@@ -55,10 +61,8 @@
 
 | ID | タスク概要 | 対象仕様書 | 優先度 | ステータス |
 |---|---|---|---|---|
-| TASK-20 | Stripe テスト決済機能の実装（直販ショップ購入 & 有料・永久アーカイブプラン加入） | `specs/features/02_extended_features.md` | 高 | In Progress |
-| TASK-21 | Gemini 2.5 Flash API 接続（対話型発明インタビュー・動的セクション自動生成API） | `specs/features/01_core_platform.md` | 高 | In Progress |
-| TASK-22 | Supabase / PostgreSQL スキーマ定義 & クライアントデータ層の整備 | `specs/features/01_core_platform.md` | 高 | In Progress |
-| TASK-23 | 本番デプロイ準備（Git初期化、.gitignore、.env.example、Vercel設定） | `specs/constitution.md` | 高 | In Progress |
+| TASK-24 | Vercel / GitHub リモートリポジトリへのプッシュ＆本番公開（ドメイン接続） | `specs/constitution.md` | 中 | Ready |
+
 
 
 ---
