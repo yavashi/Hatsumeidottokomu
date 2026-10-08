@@ -48,7 +48,7 @@ export default function InventionsListPage() {
 
   // フィルタリング & ソート
   const filteredAndSortedInventions = useMemo(() => {
-    let result = mockInventions.filter((inv) => {
+    const result = mockInventions.filter((inv) => {
       // 検索キーワード
       if (searchQuery.trim() !== "") {
         const query = searchQuery.toLowerCase();

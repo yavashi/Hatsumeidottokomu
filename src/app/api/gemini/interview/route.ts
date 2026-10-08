@@ -32,9 +32,9 @@ export async function POST(req: Request) {
 }`;
 
       const contents = [
-        ...history.map((h: any) => ({
+        ...history.map((h: { sender?: string; text?: string }) => ({
           role: h.sender === "ai" ? "model" : "user",
-          parts: [{ text: h.text }],
+          parts: [{ text: h.text || "" }],
         })),
         {
           role: "user",
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     // 2. Gemini APIキー未設定時のスマートシナリオ（フォールバック）
     let reply = "素晴らしい工夫ですね！その仕組みについて、もう少し詳しく（どんな素材やテコの原理を使っているかなど）教えていただけますか？";
     let nextStep = step + 1;
-    let extractedData = { ...inventionDraft };
+    const extractedData = { ...inventionDraft };
 
     if (step === 1) {
       reply = "「妻のために3年かけて作った」という熱い想い、本当に胸を打たれます！\n握力のない方でも簡単に回せるよう、内部の爪やテコにどんな加工の工夫を施されたのですか？";
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
       isLiveAI: false,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Gemini Interview API Error:", error);
     return NextResponse.json(
       { 

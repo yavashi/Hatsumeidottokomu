@@ -38,6 +38,12 @@ interface ChatMessage {
   requiresImageUpload?: boolean;
 }
 
+let messageSeq = 0;
+function createMessageId(prefix: string): string {
+  messageSeq += 1;
+  return `${prefix}-${messageSeq}`;
+}
+
 export default function RegisterInventionPage() {
   const [step, setStep] = useState<"interview" | "analyzing" | "preview" | "complete">("interview");
 
@@ -120,7 +126,7 @@ export default function RegisterInventionPage() {
 
       // 写真アップロードのチャットを自動送信
       const photoMessage: ChatMessage = {
-        id: `user-photo-${Date.now()}`,
+        id: createMessageId("user-photo"),
         sender: "inventor",
         text: `📸 写真（${file.name}）をアップロードしました`
       };
@@ -130,7 +136,7 @@ export default function RegisterInventionPage() {
       setTimeout(() => {
         setIsTyping(false);
         const reply: ChatMessage = {
-          id: `ai-${Date.now()}`,
+          id: createMessageId("ai"),
           sender: "ai",
           text: `写真を確認しました！実物の試作品があると説得力が全く違いますね。素晴らしいです！\n\n続いて、**使っている材質（木・樹脂・金属など）**や、**特許・実用新案の状況**について教えてください。`,
           suggestedAnswers: [
@@ -159,7 +165,7 @@ export default function RegisterInventionPage() {
     // 発明家の返答を追加
     const newMessages: ChatMessage[] = [
       ...messages,
-      { id: `user-${Date.now()}`, sender: "inventor", text }
+      { id: createMessageId("user"), sender: "inventor", text }
     ];
     setMessages(newMessages);
     setInputVal("");
@@ -192,7 +198,7 @@ export default function RegisterInventionPage() {
       .then((data) => {
         setIsTyping(false);
         let aiReplyText = data.reply;
-        let requiresImage = nextStage === 3;
+        const requiresImage = nextStage === 3;
 
         if (nextStage >= 5) {
           aiReplyText = `たくさんのお話を丁寧に聞かせていただき、本当にありがとうございました！\n\nお話しいただいた内容から、一般読者が「欲しい！」と応援したくなり、企業が「これは新商品になる！」と検討しやすい**最適なページ構成とキャッチコピー**をAIが自動組み立てします。少々お待ちください...`;
@@ -202,7 +208,7 @@ export default function RegisterInventionPage() {
         }
 
         const aiReply: ChatMessage = {
-          id: `ai-${Date.now()}`,
+          id: createMessageId("ai"),
           sender: "ai",
           text: aiReplyText,
           requiresImageUpload: requiresImage,
@@ -232,7 +238,7 @@ export default function RegisterInventionPage() {
       .catch(() => {
         setIsTyping(false);
         const fallbackReply: ChatMessage = {
-          id: `ai-${Date.now()}`,
+          id: createMessageId("ai"),
           sender: "ai",
           text: "お聞かせいただきありがとうございます！そのこだわりが一番の魅力ですね。続いて使っている材質や特許の状況を教えてください。",
         };

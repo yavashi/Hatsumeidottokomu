@@ -18,9 +18,7 @@ export async function POST(req: Request) {
 
     // 1. 本物のStripe APIキーが設定されている場合
     if (stripeSecretKey) {
-      const stripe = new Stripe(stripeSecretKey, {
-        apiVersion: "2025-02-24.acacia" as any,
-      });
+      const stripe = new Stripe(stripeSecretKey);
 
       const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
         {
@@ -76,10 +74,11 @@ export async function POST(req: Request) {
       message: "Stripeテストモード（シミュレーション決済）で実行されました。" 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Stripe Checkout Error:", error);
+    const message = error instanceof Error ? error.message : "決済セッションの作成に失敗しました";
     return NextResponse.json(
-      { error: error.message || "決済セッションの作成に失敗しました" },
+      { error: message },
       { status: 500 }
     );
   }
