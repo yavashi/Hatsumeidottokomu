@@ -52,7 +52,11 @@
   - [x] **TASK-20 Stripe 決済基盤 (`/api/checkout`, `/checkout/success`)**: 直販ショップ購入、スタンダードプラン（月額550円）、永久アーカイブ保存パック（29,800円）の決済セッション生成・領収書印刷・フォールバックシミュレーション完備
   - [x] **TASK-21 Gemini 2.5 Flash API 実接続 (`/api/gemini/interview`)**: Google GenAI SDK による対話型傾聴インタビュー、構造化JSON抽出、APIキー未設定時のスマートフォールバック
   - [x] **TASK-22 Supabase / PostgreSQL 基盤 (`supabase/schema.sql`, `src/lib/supabase.ts`, `src/lib/db.ts`)**: 6大テーブルスキーマ設計、RLSセキュリティポリシー、統一データアクセス層
-  - [x] **TASK-23 本番デプロイ準備**: Git初期化・初回コミット完了、`.env.example` テンプレート、`vercel.json` 構成
+  - [x] **TASK-24 Vercel / GitHub リモートリポジトリへのプッシュ＆本番公開（ドメイン接続）**:
+  - [x] GitHub リモートリポジトリ作成＆プッシュ (`https://github.com/yavashi/Hatsumeidottokomu`)
+  - [x] Vercel プロジェクト作成＆環境変数本番設定 (`GEMINI_API_KEY`, `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+  - [x] Vercel 本番ビルド＆デプロイ完了（本番URL: `https://hatsumeidottokomu.vercel.app`）
+  - [x] 実稼働HTTPレスポンス・レンダリング検証完了
 
 ---
 
@@ -61,7 +65,8 @@
 
 | ID | タスク概要 | 対象仕様書 | 優先度 | ステータス |
 |---|---|---|---|---|
-| TASK-24 | Vercel / GitHub リモートリポジトリへのプッシュ＆本番公開（ドメイン接続） | `specs/constitution.md` | 中 | Ready |
+| (新規要望待ち) | ユーザーのアイデアや新機能追加に応じてタスクを起票 | - | - | 待機中 |
+
 
 
 
