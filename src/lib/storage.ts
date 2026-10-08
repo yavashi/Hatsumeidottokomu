@@ -29,6 +29,7 @@ export interface UserProfile {
   avatarUrl: string;
   contactEmail: string;
   registeredDate?: string;
+  isProfilePublic?: boolean;
 }
 
 export interface ExpertInquiry {
@@ -53,6 +54,7 @@ const DEFAULT_PROFILE: UserProfile = {
   avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80",
   contactEmail: "tanaka.yoshio@example.com",
   registeredDate: "2026年1月15日",
+  isProfilePublic: true,
 };
 
 // --- 発明品の保存・取得 ---
@@ -131,7 +133,11 @@ export function getUserProfile(): UserProfile {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.USER_PROFILE);
     if (!raw) return DEFAULT_PROFILE;
-    return JSON.parse(raw) as UserProfile;
+    const parsed = JSON.parse(raw) as UserProfile;
+    if (parsed.isProfilePublic === undefined) {
+      parsed.isProfilePublic = parsed.role === "inventor";
+    }
+    return parsed;
   } catch {
     return DEFAULT_PROFILE;
   }
